@@ -74,6 +74,7 @@ class Discollama:
     )
 
   async def on_message(self, message):
+    print(message)
     if self.discord.user == message.author:
       # don't respond to ourselves
       return
