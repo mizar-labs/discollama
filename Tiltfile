@@ -11,6 +11,12 @@ podman_build(
   'quay.io/mightydjinn/discollama',
   context='.',
   extra_flags=['--platform=linux/amd64'],
+  ignore=['.github/*',
+          '.dockerignore',
+          '.env',
+          'compose.yaml',
+          'Tiltfile'
+  ],
   live_update=[
         sync('./discollama.py', '/app/'),
         run('cd /app && poetry install --no-root --only main',
