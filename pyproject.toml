@@ -10,6 +10,8 @@ python = "^3.11"
 discord-py = "^2.3.1"
 redis = "^5.0.1"
 ollama = "^0.3.2"
+dapr = "^1.14.0a"
+typing-extensions = "*"
 
 [build-system]
 requires = ["poetry-core"]

@@ -7,9 +7,12 @@ from datetime import datetime, timedelta
 
 import ollama
 import discord
-import redis
+from dapr.clients import DaprClient
 
 from logging import getLogger
+
+
+DAPR_STORE_NAME = "dev-statestore"
 
 # piggy back on the logger discord.py set up
 logging = getLogger('discord.discollama')
@@ -49,7 +52,6 @@ class Discollama:
   def __init__(self, ollama, discord, redis, model):
     self.ollama = ollama
     self.discord = discord
-    self.redis = redis
     self.model = model
 
     # register event handlers
@@ -140,21 +142,19 @@ class Discollama:
         sb.truncate()
 
   async def save(self, channel_id, message_id, ctx: list[int]):
-    self.redis.set(f'discollama:channel:{channel_id}', message_id, ex=60 * 60 * 24 * 7)
-    self.redis.set(f'discollama:message:{message_id}', json.dumps(ctx), ex=60 * 60 * 24 * 7)
+    DaprClient().save_state('dev-statestore', f'discollama:channel:{channel_id}', message_id, ex=60 * 60 * 24 * 7)
+    DaprClient().save_state('dev-statestore', f'discollama:message:{message_id}', json.dumps(ctx), ex=60 * 60 * 24 * 7)
 
   async def load(self, channel_id=None, message_id=None) -> list[int]:
     if channel_id:
-      message_id = self.redis.get(f'discollama:channel:{channel_id}')
+      message_id = DaprClient().get_state(f'discollama:channel:{channel_id}')
 
-    ctx = self.redis.get(f'discollama:message:{message_id}')
+    ctx = DaprClient().get_state(f'discollama:message:{message_id}')
     return json.loads(ctx) if ctx else []
 
   def run(self, token):
     try:
       self.discord.run(token)
-    except Exception:
-      self.redis.close()
 
 
 def main():
@@ -162,8 +162,6 @@ def main():
 
   parser.add_argument('--ollama-model', default=os.getenv('OLLAMA_MODEL', 'llama2'), type=str)
 
-  parser.add_argument('--redis-host', default=os.getenv('REDIS_HOST', '127.0.0.1'), type=str)
-  parser.add_argument('--redis-port', default=os.getenv('REDIS_PORT', 6379), type=int)
 
   parser.add_argument('--buffer-size', default=32, type=int)
 
@@ -175,7 +173,6 @@ def main():
   Discollama(
     ollama.AsyncClient(),
     discord.Client(intents=intents),
-    redis.Redis(host=args.redis_host, port=args.redis_port, db=0, decode_responses=True),
     model=args.ollama_model,
   ).run(os.environ['DISCORD_TOKEN'])
 
