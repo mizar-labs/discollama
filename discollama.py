@@ -49,7 +49,7 @@ class Response:
 
 
 class Discollama:
-  def __init__(self, ollama, discord, redis, model):
+  def __init__(self, ollama, discord, model):
     self.ollama = ollama
     self.discord = discord
     self.model = model
@@ -153,16 +153,13 @@ class Discollama:
     return json.loads(ctx) if ctx else []
 
   def run(self, token):
-    try:
-      self.discord.run(token)
+    self.discord.run(token)
 
 
 def main():
   parser = argparse.ArgumentParser()
 
   parser.add_argument('--ollama-model', default=os.getenv('OLLAMA_MODEL', 'llama2'), type=str)
-
-
   parser.add_argument('--buffer-size', default=32, type=int)
 
   args = parser.parse_args()
