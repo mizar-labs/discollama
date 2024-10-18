@@ -5,6 +5,13 @@ load('ext://secret', 'secret_from_dict')
 
 allow_k8s_contexts('default')
 
+yamls = [
+  'components/statestore/redis.yaml',
+]
+
+for yaml in yamls:
+  k8s_yaml(yaml)
+
 
 #Podman
 podman_build(
@@ -15,7 +22,8 @@ podman_build(
           '.dockerignore',
           '.env',
           'compose.yaml',
-          'Tiltfile'
+          'Tiltfile',
+          'components/*'
   ],
   live_update=[
         sync('./discollama.py', '/app/'),
