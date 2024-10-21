@@ -19,13 +19,13 @@ DEBUG = os.getenv('DEBUG', 'false').lower() == 'true' or APP_ENV == 'dev'
 if DEBUG:
   logging.info("APP_ENV: %s", APP_ENV)
 # Set APP_ID to the application ID, this should be automatically set by Dapr
-APP_ID = os.getenv('APP_ID', 'dev-discollama')
+APP_ID = os.getenv('APP_ID', 'discollama')
 if DEBUG:
   logging.info("APP_ID: %s", APP_ID)
 # Set DEBUG to 'true' to enable debug logging, this should be automatically set by 1password
 DEBUG = os.getenv('DEBUG', 'false').lower() == 'true' or APP_ENV == 'dev'
 # Set DAPR_STATE_STORE to the state store name, this should be automatically set by Dapr
-DAPR_STATE_STORE = f'{APP_ID}'
+DAPR_STATE_STORE = f'{APP_ENV}-{APP_ID}'
 if DEBUG:
   logging.info("DAPR_STATE_STORE: %s", DAPR_STATE_STORE)
 #Set BASE_URL to the base URL of the Dapr sidecar
@@ -200,7 +200,10 @@ class Discollama:
       )
       if DEBUG:
         logging.info("Response: %s", message_id_response.text)
-      message_id = message_id_response.json()
+      try:
+        message_id = message_id_response.json()
+      except:
+        logging.error("Error loading state or no state found for channel %s", channel_id)
       if DEBUG:
         logging.info("Response: %s", message_id_response.status_code)
     if DEBUG:
@@ -210,10 +213,14 @@ class Discollama:
     )
     if DEBUG:
       logging.info("Response: %s", ctx_response.status_code)
-    ctx = ctx_response.json()
-    if DEBUG:
-      logging.info("Context: %s", ctx)
-    return json.loads(ctx) if ctx else []
+    try:
+      ctx = ctx_response.json()
+      if DEBUG:
+        logging.info("Context: %s", ctx_response.text)
+      return json.loads(ctx)
+    except:
+      logging.error("Error loading state or no state found for message %s", message_id)
+      return []
 
 
   # Run the bot
