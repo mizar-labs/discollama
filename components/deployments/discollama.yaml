@@ -2,8 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: dev-discollama
-  name: dev-discollama
+    app: discollama
+  name: discollama
   namespace: default
 spec:
   progressDeadlineSeconds: 600
@@ -11,7 +11,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: dev-discollama
+      app: discollama
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -20,14 +20,14 @@ spec:
   template:
     metadata:
       labels:
-        app: dev-discollama
+        app: discollama
       annotations:
         dapr.io/enabled: "true"
-        dapr.io/app-id: "dev-discollama"
+        dapr.io/app-id: "discollama"
         dapr.io/enable-api-logging: "true"
     spec:
       containers:
-        - name: dev-discollama
+        - name: discollama
           image: quay.io/mightydjinn/discollama
           envFrom:
           - secretRef:
