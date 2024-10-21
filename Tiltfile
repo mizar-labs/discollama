@@ -7,6 +7,7 @@ allow_k8s_contexts('default')
 
 yamls = [
   'components/statestore/redis.yaml',
+  'components/deployments/discollama.yaml',
 ]
 
 for yaml in yamls:
@@ -23,13 +24,8 @@ podman_build(
           '.env',
           'compose.yaml',
           'Tiltfile',
-          'components/*'
+          'components/**'
   ],
-  live_update=[
-        sync('./discollama.py', '/app/'),
-        run('cd /app && poetry install --no-root --only main',
-            trigger='./pyproject.toml')
-  ]
 )
 
 
@@ -37,23 +33,7 @@ podman_build(
 #docker_build('discollama', '.')
 
 k8s_yaml(secret_from_dict('discollama', inputs = {
-    'REDIS_HOST' : os.getenv('REDIS_HOST'),
-    'REDIS_PORT' : os.getenv('REDIS_PORT'),
     'OLLAMA_HOST' : os.getenv('OLLAMA_HOST'),
     'OLLAMA_MODEL' : os.getenv('OLLAMA_MODEL'),
     'DISCORD_TOKEN' : os.getenv('DISCORD_TOKEN')
 }))
-
-
-# Create a redis deployment and service with a readiness probe
-deployment_create(
-  'redis',
-  ports='6379',
-  readiness_probe={'exec':{'command':['redis-cli','ping']}}
-)
-
-deployment_create(
- 'discollama',
- image='quay.io/mightydjinn/discollama',
- env_from=[{'secretRef': {'name': 'discollama'}}]
-)
